@@ -26,10 +26,22 @@ struct GameSession {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("1. Preparing game list...");
-    let game_cache: HashSet<String> = discover_steam_games()
+    let steam_games = discover_steam_games();
+    println!("🎮 Steam Games: {:?}", steam_games);
+    let mut game_cache: HashSet<String> = steam_games
         .into_iter()
         .map(|name| name.to_lowercase())
         .collect();
+
+    let epic_games = discover_epic_games();
+    println!("🎮 Epic Games: {:?}", epic_games);
+    game_cache.extend(
+        epic_games
+            .into_iter()
+            .map(|name| name.to_lowercase())
+    );
+
+
 
     println!("2. Session Tracking Started. (Writing to active_sessions.json)");
 
@@ -112,6 +124,39 @@ fn discover_steam_games() -> HashSet<String> {
     }
     println!("-> Total {} Steam games cached.", games.len());
     games
+}
+
+fn discover_epic_games() -> HashSet<String> {
+    let mut games = HashSet::new();
+    #[cfg(target_os = "windows")]
+    let epic_path = r"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests";
+
+    if std::path::Path::new(epic_path).exists() {
+        if let Ok(entries) = std::fs::read_dir(epic_path) {
+            for entry in entries.flatten() {
+                if entry.path().extension().and_then(|s| s.to_str()) == Some("item") {
+                    if let Some(game_name) = parse_epic_manifest(&entry.path()) {
+                        games.insert(game_name);
+                    }
+                }
+            }
+        }
+    }
+    println!("-> Total {} Epic Games cached.", games.len());
+    games
+}
+
+fn parse_epic_manifest(path: &std::path::Path) -> Option<String> {
+    let content = std::fs::read_to_string(path).ok()?;
+    let json: serde_json::Value = serde_json::from_str(&content).ok()?;
+
+    let exe_path = json.get("LaunchExecutable")?.as_str()?;
+    let exe_name = std::path::Path::new(exe_path)
+        .file_name()?
+        .to_string_lossy()
+        .to_string();
+
+    Some(exe_name)
 }
 
 fn parse_acf_file(path: &std::path::Path) -> Option<String> {
