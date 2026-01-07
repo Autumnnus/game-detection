@@ -33,7 +33,7 @@ pub fn discover_xbox_games() -> HashSet<String> {
 
         match check_if_game(&package, &display_name) {
             Ok(Some(exe_name)) => {
-                println!("✅ Found Xbox Game: {} (Exe: {})", display_name, exe_name);
+                // println!("✅ Found Xbox Game: {} (Exe: {})", display_name, exe_name);
                 games.insert(exe_name);
             }
             Ok(None) => {
