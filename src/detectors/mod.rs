@@ -2,6 +2,7 @@ pub mod steam;
 pub mod epic;
 pub mod ubisoft;
 pub mod registry;
+pub mod xbox;
 
 use std::collections::HashSet;
 
@@ -19,11 +20,15 @@ pub fn scan_all_games() -> HashSet<String> {
     let ubisoft_games = ubisoft::discover_ubisoft_games();
     println!("🎮 Ubisoft Games: {:?}", ubisoft_games);
 
+    let xbox_games = xbox::discover_xbox_games();
+    println!("🎮 Xbox/Store Games: {:?}", xbox_games);
+
     let mut all_games = HashSet::new();
     
     all_games.extend(steam_games.into_iter().map(|s| s.to_lowercase()));
     all_games.extend(epic_games.into_iter().map(|s| s.to_lowercase()));
     all_games.extend(ubisoft_games.into_iter().map(|s| s.to_lowercase()));
+    all_games.extend(xbox_games.into_iter().map(|s| s.to_lowercase()));
     
     if ENABLE_REGISTRY_SCAN {
         let registry_games = registry::discover_registry_games();
